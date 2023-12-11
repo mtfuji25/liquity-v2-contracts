@@ -97,8 +97,8 @@ contract DelegatedOps is EIP712, IDelegatedOps {
 
         bytes32 _hash = _hashTypedDataV4(structHash);
 
-        // address signer = ECDSA.recover(_hash, _signature);
-        // require(signer == _who, "DelegatedOps: invalid signature");
+        address signer = ECDSA.recover(_hash, _signature);
+        require(signer == _who, "DelegatedOps: invalid signature");
 
         isApprovedDelegate[_who][_delegate] = _isApproved;
         emit DelegateApprovalSet(_who, _delegate, _isApproved);
