@@ -51,8 +51,9 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     const collaterals = await Bluebird.mapSeries(
       this.config.COLLATERALS,
       async (token) => {
-        const { wCollateral, delegate, troveManager } =
-          await this.addCollateral(core, external, token);
+        const result = await this.addCollateral(core, external, token);
+        if (!result) return;
+        const { wCollateral, delegate, troveManager } = result;
         const erc20 = await this.loadOrDeployMockERC20(token);
         return {
           wCollateral,
@@ -64,11 +65,17 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       }
     );
 
-    await core.onez.addFacilitator(
-      core.debtTokenOnezProxy.address,
-      "bo",
-      e18.mul(1000000)
+    const facilitator = await core.onez.getFacilitator(
+      core.debtTokenOnezProxy.address
     );
+    if (facilitator.bucketCapacity.eq(0)) {
+      this.log("- Adding protocol as a facilitator");
+      await core.onez.addFacilitator(
+        core.debtTokenOnezProxy.address,
+        "bo",
+        e18.mul(1000000)
+      );
+    }
 
     return {
       core,
@@ -251,33 +258,48 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
         external.lendingPool.address,
         token.address,
         core.borrowerOperations.address,
-      ]
+      ],
+      token.symbol
     );
 
-    await this.waitForTx(
-      core.priceFeedPyth.setOracle(wCollateral.address, token.pythId)
+    const deployedTmAddress = await core.factory.collatearlToTM(
+      wCollateral.address
     );
 
-    await this.waitForTx(
-      core.priceFeedPyth.setOracle(token.address, token.pythId)
-    );
+    console.log("got", await core.priceFeedPyth.priceIds(wCollateral.address));
+    if ((await core.priceFeedPyth.priceIds(wCollateral.address)) === "0x") {
+      this.log("- Setting pricefeeds");
 
-    await this.waitForTx(
-      core.factory.deployNewInstance(
-        wCollateral.address, // address collateral
-        core.priceFeedPyth.address, // address priceFeed;
-        {
-          minuteDecayFactor: "999037758833783000", // uint256 minuteDecayFactor; // 999037758833783000  (half life of 12 hours)
-          redemptionFeeFloor: "5000000000000000", // uint256 redemptionFeeFloor; // 1e18 / 1000 * 5  (0.5%)
-          maxRedemptionFee: "1000000000000000000", // uint256 maxRedemptionFee; // 1e18  (100%)
-          borrowingFeeFloor: "5000000000000000", // uint256 borrowingFeeFloor; // 1e18 / 1000 * 5  (0.5%)
-          maxBorrowingFee: "50000000000000000", // uint256 maxBorrowingFee; // 1e18 / 100 * 5  (5%)
-          interestRateInBps: token.interestRateInBps, // "100", // uint256 interestRateInBps; // 100 (1%)
-          maxDebt: e18.mul(1000000), // uint256 maxDebt;
-          MCR: "1200000000000000000", // uint256 MCR; // 12 * 1e17  (120%)
-        }
-      )
-    );
+      await this.waitForTx(
+        core.priceFeedPyth.setOracle(wCollateral.address, token.pythId)
+      );
+
+      await this.waitForTx(
+        core.priceFeedPyth.setOracle(token.address, token.pythId)
+      );
+    }
+
+    if (deployedTmAddress === ZERO_ADDRESS) {
+      this.log("- Deploying collateral");
+      await this.waitForTx(
+        core.factory.deployNewInstance(
+          wCollateral.address, // address collateral
+          core.priceFeedPyth.address, // address priceFeed;
+          {
+            minuteDecayFactor: "999037758833783000", // uint256 minuteDecayFactor; // 999037758833783000  (half life of 12 hours)
+            redemptionFeeFloor: "5000000000000000", // uint256 redemptionFeeFloor; // 1e18 / 1000 * 5  (0.5%)
+            maxRedemptionFee: "1000000000000000000", // uint256 maxRedemptionFee; // 1e18  (100%)
+            borrowingFeeFloor: "5000000000000000", // uint256 borrowingFeeFloor; // 1e18 / 1000 * 5  (0.5%)
+            maxBorrowingFee: "50000000000000000", // uint256 maxBorrowingFee; // 1e18 / 100 * 5  (5%)
+            interestRateInBps: token.interestRateInBps, // "100", // uint256 interestRateInBps; // 100 (1%)
+            maxDebt: e18.mul(1000000), // uint256 maxDebt;
+            MCR: "1200000000000000000", // uint256 MCR; // 12 * 1e17  (120%)
+          }
+        )
+      );
+
+      this.log("- Collateral deployed");
+    }
 
     let delegate: BaseDelegate;
 
@@ -287,22 +309,31 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       tmAddress
     );
 
+    this.log("- Deploying delegate with troveManager", troveManager.address);
     if (token.symbol === "WETH")
-      delegate = await this.deployContract<BaseDelegate>("WETHDelegate", [
-        core.borrowerOperations.address, // IBorrowerOperations _bo,
-        wCollateral.address, // IWrappedLendingCollateral _collateral,
-        tmAddress, // address _tm,
-        core.onez.address, // IERC20 _debt,
-        token.address, // IWETH _weth
-      ]);
+      delegate = await this.deployContract<BaseDelegate>(
+        "WETHDelegate",
+        [
+          core.borrowerOperations.address, // IBorrowerOperations _bo,
+          wCollateral.address, // IWrappedLendingCollateral _collateral,
+          tmAddress, // address _tm,
+          core.onez.address, // IERC20 _debt,
+          token.address, // IWETH _weth
+        ],
+        token.symbol
+      );
     else
-      delegate = await this.deployContract<BaseDelegate>("ERC20Delegate", [
-        core.borrowerOperations.address, // IBorrowerOperations _bo,
-        wCollateral.address, // IWrappedLendingCollateral _collateral,
-        tmAddress, // address _tm,
-        core.onez.address, // IERC20 _debt,
-        token.address, // IERC20 _underlying
-      ]);
+      delegate = await this.deployContract<BaseDelegate>(
+        "ERC20Delegate",
+        [
+          core.borrowerOperations.address, // IBorrowerOperations _bo,
+          wCollateral.address, // IWrappedLendingCollateral _collateral,
+          tmAddress, // address _tm,
+          core.onez.address, // IERC20 _debt,
+          token.address, // IERC20 _underlying
+        ],
+        token.symbol
+      );
 
     this.log(`------ Collateral Added ------`);
     return { wCollateral, delegate, troveManager };
@@ -399,13 +430,16 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
   abstract getDeploymentNonce(address: string): Promise<number>;
 
   private async estimateDeploymentAddresses() {
+    this.log("- Estimating deployment addresses");
     const who = await (await this.getEthersSigner()).getAddress();
     const nonce = await this.getDeploymentNonce(who);
 
     const addreses = [];
-    for (let index = 0; index < 30; index++) {
+    for (let index = 0; index < 15; index++) {
       addreses.push(await this.estimateDeploymentAddress(who, nonce + index));
     }
+
+    this.log("- Done estimating deployment addresses");
 
     return {
       DebtTokenOnezProxy: addreses[0],

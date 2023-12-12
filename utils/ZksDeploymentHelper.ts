@@ -70,7 +70,10 @@ export default class ZksDeploymentHelper extends BaseDeploymentHelper {
           this.state[`${name}${suffix}`].address
         }`
       );
-      return this.getContract<T>(this.state[`${name}${suffix}`].address, name);
+      return await this.getContract<T>(
+        name,
+        this.state[`${name}${suffix}`].address
+      );
     }
 
     this.log(`- Deploying ${name}:${suffix}`);
@@ -96,7 +99,7 @@ export default class ZksDeploymentHelper extends BaseDeploymentHelper {
     };
 
     this.saveDeployment(this.state);
-    await this.verifyContract(name, params);
+    await this.verifyContract(`${name}${suffix}`, params);
     return contract;
   }
 

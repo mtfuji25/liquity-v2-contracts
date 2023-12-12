@@ -13,15 +13,15 @@ const params: IParams = {
       interestRateInBps: "0",
       capacityE18: "10000000000000000000000000", // 100 mil mint
     },
-    // {
-    //   pythId:
-    //     "0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722",
-    //   address: "0x9223dc9205cf8336ca59ba0bd390647e62d487e5",
-    //   symbol: "USDC",
-    //   decimals: 6,
-    //   interestRateInBps: "0",
-    //   capacityE18: "10000000000000000000000000", // 100 mil mint
-    // },
+    {
+      pythId:
+        "0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722",
+      address: "0x9223dc9205cf8336ca59ba0bd390647e62d487e5",
+      symbol: "USDC",
+      decimals: 6,
+      interestRateInBps: "0",
+      capacityE18: "10000000000000000000000000", // 100 mil mint
+    },
   ],
 
   PYTH_ADDRESS: "0xC38B1dd611889Abc95d4E0a472A667c3671c08DE",
