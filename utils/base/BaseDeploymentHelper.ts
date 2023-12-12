@@ -52,7 +52,6 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       this.config.COLLATERALS,
       async (token) => {
         const result = await this.addCollateral(core, external, token);
-        if (!result) return;
         const { wCollateral, delegate, troveManager } = result;
         const erc20 = await this.loadOrDeployMockERC20(token);
         return {
@@ -266,8 +265,10 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       wCollateral.address
     );
 
-    console.log("got", await core.priceFeedPyth.priceIds(wCollateral.address));
-    if ((await core.priceFeedPyth.priceIds(wCollateral.address)) === "0x") {
+    if (
+      (await core.priceFeedPyth.priceIds(wCollateral.address)) ===
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ) {
       this.log("- Setting pricefeeds");
 
       await this.waitForTx(
@@ -435,7 +436,7 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     const nonce = await this.getDeploymentNonce(who);
 
     const addreses = [];
-    for (let index = 0; index < 15; index++) {
+    for (let index = 0; index < 16; index++) {
       addreses.push(await this.estimateDeploymentAddress(who, nonce + index));
     }
 

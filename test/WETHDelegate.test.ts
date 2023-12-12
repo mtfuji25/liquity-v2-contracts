@@ -12,6 +12,7 @@ import params from "../deploy/params/hardhat-test";
 import { ZERO_ADDRESS } from "../utils/base/BaseHelper";
 import { e18 } from "./helpers";
 import { BorrowerOperations, StabilityPool } from "../typechain";
+import { getDelegateHash } from "./hashHelpers";
 
 describe.only("WETHDelegate", function () {
   let core: ICoreContracts;
@@ -41,14 +42,24 @@ describe.only("WETHDelegate", function () {
   });
 
   it("Should open a trove with ETH collateral as ETH", async function () {
-    await collaterals[0].delegate.connect(deployer).openTrove(
+    const deadline = Math.floor(Date.now() / 1000 + 86400);
+    const collateral = collaterals[0];
+
+    const hashOpen = await getDelegateHash(
+      core.borrowerOperations,
+      deployer,
+      collateral.delegate.address,
+      deadline
+    );
+
+    await collateral.delegate.connect(deployer).openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
       e18, // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
-      Date.now(), // uint256 _deadline,
-      "0x", // bytes memory signature
+      deadline, // uint256 _deadline,
+      hashOpen.signature, // bytes memory signature
       { value: e18 }
     );
 
@@ -57,6 +68,14 @@ describe.only("WETHDelegate", function () {
 
   it("Should close a trove with ETH collateral as WETH inside of wrapped collateral", async function () {
     const collateral = collaterals[0];
+    const deadline = Math.floor(Date.now() / 1000 + 86400);
+
+    const hashOpen = await getDelegateHash(
+      core.borrowerOperations,
+      deployer,
+      collateral.delegate.address,
+      deadline
+    );
 
     // open trove
     await collateral.delegate.connect(deployer).openTrove(
@@ -65,8 +84,8 @@ describe.only("WETHDelegate", function () {
       e18, // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
-      Date.now(), // uint256 _deadline,
-      "0x", // bytes memory signature
+      deadline, // uint256 _deadline,
+      hashOpen.signature, // bytes memory signature
       { value: e18 }
     );
 
@@ -81,23 +100,20 @@ describe.only("WETHDelegate", function () {
         await core.onez.balanceOf(core.feeReceiver.address)
       );
 
-    console.log("got", await core.onez.balanceOf(deployer.address));
-    console.log(
-      "debt",
-      (await collateral.troveManager.getEntireDebtAndColl(deployer.address))
-        .debt
-    );
-
     await core.onez
       .connect(deployer)
       .approve(collateral.delegate.address, e18.mul(300));
 
-    await collateral.delegate.connect(deployer).closeTrove(
-      Date.now(), // uint256 _deadline,
-      "0x" // bytes memory signature
+    const hashClose = await getDelegateHash(
+      core.borrowerOperations,
+      deployer,
+      collateral.delegate.address,
+      deadline
     );
-    // await bo
-    //   .connect(deployer)
-    //   .closeTrove(core.factory.troveManagers(0), deployer.address);
+
+    await collateral.delegate.connect(deployer).closeTrove(
+      deadline, // uint256 _deadline,
+      hashClose.signature // bytes memory signature
+    );
   });
 });
