@@ -3,6 +3,7 @@
 pragma solidity 0.8.19;
 
 import "./BaseDelegate.sol";
+import "hardhat/console.sol";
 
 contract ERC20Delegate is BaseDelegate {
     IERC20 public underlying;
@@ -19,8 +20,10 @@ contract ERC20Delegate is BaseDelegate {
     }
 
     function _mint(uint256 amt) internal override {
-        if (amt > 0) underlying.transferFrom(msg.sender, address(this), amt);
-        collateral.mint(amt);
+        if (amt > 0) {
+            underlying.transferFrom(msg.sender, address(this), amt);
+            collateral.mint(amt);
+        }
     }
 
     function _flush(address to) internal override {

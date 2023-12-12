@@ -13,7 +13,7 @@ import { e18 } from "./helpers";
 import { BorrowerOperations, StabilityPool } from "../typechain";
 import { getDelegateHash } from "./hashHelpers";
 
-describe("WETHDelegate", function () {
+describe("ERC20Delegate", function () {
   let core: ICoreContracts;
   let external: IExternalContracts;
   let restWallets: SignerWithAddress[];
@@ -40,77 +40,87 @@ describe("WETHDelegate", function () {
     sp = core.stabilityPool;
   });
 
-  it("Should open a trove with ETH collateral as ETH", async function () {
+  it("Should open a trove with USDC collateral as ERC20", async function () {
     const deadline = Math.floor(Date.now() / 1000 + 86400);
-    const collateral = collaterals[0];
+    const collateral = collaterals[1];
+    const erc20 = collateral.erc20.connect(ant);
+    const delegate = collateral.delegate.connect(ant);
 
     const hashOpen = await getDelegateHash(
       core.borrowerOperations,
-      deployer,
+      ant,
       collateral.delegate.address,
       deadline
     );
 
-    await collateral.delegate.connect(deployer).openTrove(
+    // give approval and mint 1000 to the ant
+    await erc20.approve(collateral.delegate.address, e18.mul(1000));
+    await erc20["mint(uint256)"](e18.mul(1000));
+
+    await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e18, // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
-      hashOpen.signature, // bytes memory signature
-      { value: e18 }
+      hashOpen.signature // bytes memory signature
     );
 
-    expect(await core.onez.balanceOf(deployer.address)).to.equal(e18.mul(200));
+    expect(await core.onez.balanceOf(ant.address)).to.equal(e18.mul(200));
   });
 
-  it("Should close a trove with ETH collateral as WETH", async function () {
-    const collateral = collaterals[0];
+  it("Should close a trove with USDC collateral as ERC20", async function () {
+    const collateral = collaterals[1];
+    const erc20 = collateral.erc20.connect(ant);
+    const delegate = collateral.delegate.connect(ant);
     const deadline = Math.floor(Date.now() / 1000 + 86400);
 
     const hashOpen = await getDelegateHash(
       core.borrowerOperations,
-      deployer,
+      ant,
       collateral.delegate.address,
       deadline
     );
 
+    // give approval and mint 1000 to the ant
+    await erc20.approve(collateral.delegate.address, e18.mul(1000));
+    await erc20["mint(uint256)"](e18.mul(1000));
+
     // open trove
-    await collateral.delegate.connect(deployer).openTrove(
+    await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e18, // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
-      hashOpen.signature, // bytes memory signature
-      { value: e18 }
+      hashOpen.signature // bytes memory signature
     );
 
-    expect(await core.onez.balanceOf(deployer.address)).to.equal(e18.mul(200));
+    expect(await core.onez.balanceOf(ant.address)).to.equal(e18.mul(200));
 
     // claim trove open fees
     await core.feeReceiver
       .connect(deployer)
       .transferToken(
         core.onez.address,
-        deployer.address,
+        ant.address,
         await core.onez.balanceOf(core.feeReceiver.address)
       );
 
     await core.onez
-      .connect(deployer)
+      .connect(ant)
       .approve(collateral.delegate.address, e18.mul(300));
 
     const hashClose = await getDelegateHash(
       core.borrowerOperations,
-      deployer,
+      ant,
       collateral.delegate.address,
       deadline
     );
 
-    await collateral.delegate.connect(deployer).closeTrove(
+    await delegate.closeTrove(
       deadline, // uint256 _deadline,
       hashClose.signature // bytes memory signature
     );
