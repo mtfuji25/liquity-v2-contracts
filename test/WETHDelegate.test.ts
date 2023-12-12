@@ -14,7 +14,7 @@ import { e18 } from "./helpers";
 import { BorrowerOperations, StabilityPool } from "../typechain";
 import { getDelegateHash } from "./hashHelpers";
 
-describe.only("WETHDelegate", function () {
+describe("WETHDelegate", function () {
   let core: ICoreContracts;
   let external: IExternalContracts;
   let restWallets: SignerWithAddress[];

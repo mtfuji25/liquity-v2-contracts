@@ -2,7 +2,6 @@ import { expect } from "chai";
 import {
   ICoreContracts,
   IExternalContracts,
-  IGovContracts,
   ITokenContracts,
 } from "../utils/base/interfaces";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";

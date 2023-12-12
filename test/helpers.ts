@@ -1,12 +1,8 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BorrowerOperations, StabilityPool, TroveManager } from "../typechain";
+import { BorrowerOperations } from "../typechain";
 import { BigNumber } from "ethers";
 import { ZERO_ADDRESS } from "../utils/base/BaseHelper";
-import {
-  ICollateral,
-  ICoreContracts,
-  ITokenContracts,
-} from "../utils/base/interfaces";
+import { ICoreContracts, ITokenContracts } from "../utils/base/interfaces";
 
 export const e18 = BigNumber.from(10).pow(18);
 
