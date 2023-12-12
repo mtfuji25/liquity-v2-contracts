@@ -1,8 +1,5 @@
 import { formatEther } from "ethers/lib/utils";
 
-const rlp = require("rlp");
-const keccak = require("keccak");
-
 import BaseHelper, { ZERO_ADDRESS } from "./BaseHelper";
 import {
   BorrowerOperations,
@@ -31,6 +28,7 @@ import {
 import { ICollateral, ICoreContracts, IExternalContracts } from "./interfaces";
 import Bluebird from "bluebird";
 import { BigNumber } from "ethers";
+import * as ethers from "ethers";
 
 const e18 = BigNumber.from(10).pow(18);
 
@@ -90,6 +88,10 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     // predict all the addresses that we will generate
     const estimates = await this.estimateDeploymentAddresses();
 
+    this.log(
+      "- Estimating DebtTokenOnezProxy at",
+      estimates.DebtTokenOnezProxy
+    );
     const debtTokenOnezProxy = await this.deployContract<DebtTokenOnezProxy>(
       "DebtTokenOnezProxy",
       [
@@ -103,6 +105,7 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       ]
     );
 
+    this.log("- Estimating PrismaCore at", estimates.PrismaCore);
     const prismaCore = await this.deployContract<PrismaCore>("PrismaCore", [
       owner, // address _owner,
       owner, // address _guardian,
@@ -110,15 +113,18 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       estimates.FeeReceiver, // address _feeReceiver
     ]);
 
+    this.log("- Estimating PriceFeedPyth at", estimates.PriceFeedPyth);
     const priceFeedPyth = await this.deployContract<PriceFeedPyth>(
       "PriceFeedPyth",
       [estimates.PrismaCore, external.pyth.address]
     );
 
+    this.log("- Estimating FeeReceiver at", estimates.FeeReceiver);
     const feeReceiver = await this.deployContract<FeeReceiver>("FeeReceiver", [
       estimates.PrismaCore,
     ]);
 
+    this.log("- Estimating Factory at", estimates.Factory);
     const factory = await this.deployContract<Factory>("Factory", [
       estimates.PrismaCore, // address _prismaCore,
       estimates.DebtTokenOnezProxy, // IDebtTokenOnezProxy _debtToken,
@@ -129,6 +135,10 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       estimates.LiquidationManager, // ILiquidationManager _liquidationManager
     ]);
 
+    this.log(
+      "- Estimating BorrowerOperations at",
+      estimates.BorrowerOperations
+    );
     const borrowerOperations = await this.deployContract<BorrowerOperations>(
       "BorrowerOperations",
       [
@@ -381,23 +391,19 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     return pyth;
   }
 
-  private async estimateDeploymentAddress(address: string, nonce: number) {
-    const rlp_encoded = ethers.utils.RLP.encode([
-      address,
-      ethers.BigNumber.from(nonce.toString()).toHexString(),
-    ]);
+  abstract estimateDeploymentAddress(
+    address: string,
+    nonce: number
+  ): Promise<string>;
 
-    const contract_address_long = ethers.utils.keccak256(rlp_encoded);
-    const contract_address = "0x".concat(contract_address_long.substring(26));
-    return ethers.utils.getAddress(contract_address);
-  }
+  abstract getDeploymentNonce(address: string): Promise<number>;
 
   private async estimateDeploymentAddresses() {
-    const nonce = await (await this.getEthersSigner()).getTransactionCount();
     const who = await (await this.getEthersSigner()).getAddress();
+    const nonce = await this.getDeploymentNonce(who);
 
     const addreses = [];
-    for (let index = 0; index < 100; index++) {
+    for (let index = 0; index < 30; index++) {
       addreses.push(await this.estimateDeploymentAddress(who, nonce + index));
     }
 

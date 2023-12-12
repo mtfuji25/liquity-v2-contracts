@@ -69,12 +69,12 @@ export default abstract class BaseHelper {
     name: string,
     constructorArguments: any[] = []
   ) {
-    // if (
-    //   this.skipSave ||
-    //   !this.config.ETHERSCAN_BASE_URL ||
-    //   this.config.ETHERSCAN_BASE_URL === ""
-    // )
-    //   return;
+    if (
+      this.skipSave ||
+      !this.config.ETHERSCAN_BASE_URL ||
+      this.config.ETHERSCAN_BASE_URL === ""
+    )
+      return;
 
     if (!this.state[name] || !this.state[name].address) {
       console.error(`- No deployment state for contract ${name}!!`);

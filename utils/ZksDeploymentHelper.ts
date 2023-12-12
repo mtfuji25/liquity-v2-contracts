@@ -45,7 +45,6 @@ export default class ZksDeploymentHelper extends BaseDeploymentHelper {
     factoryN: string,
     address: string
   ) => {
-    console.log("loading", factoryN, address);
     const factory = await this.getFactory(factoryN);
     return new ethers.Contract(
       address,
@@ -99,5 +98,26 @@ export default class ZksDeploymentHelper extends BaseDeploymentHelper {
     this.saveDeployment(this.state);
     await this.verifyContract(name, params);
     return contract;
+  }
+
+  async estimateDeploymentAddress(
+    address: string,
+    nonce: number
+  ): Promise<string> {
+    const deployerContract = await this.getContract(
+      "IZkSyncDeployer",
+      "0x0000000000000000000000000000000000008006"
+    );
+
+    return await deployerContract.getNewAddressCreate(address, nonce);
+  }
+
+  async getDeploymentNonce(address: string): Promise<number> {
+    const nonceHolderContract = await this.getContract(
+      "IZkSyncNonceHolder",
+      "0x0000000000000000000000000000000000008003"
+    );
+
+    return Number(await nonceHolderContract.getDeploymentNonce(address));
   }
 }
