@@ -75,6 +75,10 @@ abstract contract BaseDelegate {
         bytes memory signature
     ) external payable validateSignature(_deadline, signature) {
         _mint(_collDeposit);
+
+        if (!_isDebtIncrease)
+            debt.transferFrom(msg.sender, address(this), _debtChange);
+
         bo.adjustTrove(
             address(tm),
             msg.sender,
