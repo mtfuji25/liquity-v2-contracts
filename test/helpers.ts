@@ -5,6 +5,7 @@ import { ZERO_ADDRESS } from "../utils/base/BaseHelper";
 import { ICoreContracts, ITokenContracts } from "../utils/base/interfaces";
 
 export const e18 = BigNumber.from(10).pow(18);
+export const e6 = BigNumber.from(10).pow(6);
 
 export const openTroves = async (
   bo: BorrowerOperations,
