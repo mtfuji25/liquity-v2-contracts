@@ -10,14 +10,13 @@ import params from "../deploy/params/hardhat-test";
 
 describe("WETHDelegate", function () {
   let core: ICoreContracts;
-  let restWallets: SignerWithAddress[];
   let collaterals: ITokenContracts[];
   let deployer: SignerWithAddress;
 
   const deadline = Math.floor(Date.now() / 1000 + 86400 * 100);
 
   beforeEach(async () => {
-    [deployer, ant, ...restWallets] = await ethers.getSigners();
+    [deployer] = await ethers.getSigners();
 
     const helper = new HardhatDeploymentHelper(deployer, params, hre);
     helper.log = () => {
@@ -26,11 +25,7 @@ describe("WETHDelegate", function () {
 
     const result = await helper.deploy();
     core = result.core;
-    external = result.external;
     collaterals = result.collaterals;
-
-    bo = core.borrowerOperations;
-    sp = core.stabilityPool;
   });
 
   it("Should open a trove with ETH collateral as ETH", async function () {

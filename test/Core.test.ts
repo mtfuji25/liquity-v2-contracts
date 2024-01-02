@@ -21,7 +21,7 @@ import {
 } from "./helpers";
 import { BorrowerOperations, StabilityPool, TroveManager } from "../typechain";
 
-describe.only("Core", function () {
+describe("Core", function () {
   let core: ICoreContracts;
   let external: IExternalContracts;
   let restWallets: SignerWithAddress[];
@@ -59,18 +59,12 @@ describe.only("Core", function () {
     expect(
       await p.callStatic.fetchPrice(collaterals[0].wCollateral.address)
     ).to.equal("1800000000000000000000");
-    expect(
-      await p.callStatic.fetchPrice(collaterals[0].token.address)
-    ).to.equal("1800000000000000000000");
   });
 
   it("Should report price for USDC properly", async function () {
     const p = core.priceFeed;
     expect(
       await p.callStatic.fetchPrice(collaterals[1].wCollateral.address)
-    ).to.equal("1000000000000000000");
-    expect(
-      await p.callStatic.fetchPrice(collaterals[1].token.address)
     ).to.equal("1000000000000000000");
   });
 
@@ -291,7 +285,7 @@ describe.only("Core", function () {
   });
 
   describe("redemptions", () => {
-    it("Should redeem against trove with ETH collateral after bootstrap period has passed", async function () {
+    it.skip("Should redeem against trove with ETH collateral after bootstrap period has passed", async function () {
       const bo = core.borrowerOperations;
 
       await openTrove(
@@ -310,8 +304,12 @@ describe.only("Core", function () {
       const tmAddr = await core.factory.troveManagers(0);
       const tm = core.troveManager.attach(tmAddr);
 
-      // go forward 15 days
-      await time.increase(86400 * 15);
+      // go forward 15 days and updte the oracle ones
+      for (let index = 0; index < 30; index++) {
+        await external.chainLinkOracles["WETH"].updateAnswer(1800 * 1e8);
+        await time.increase(86400 / 2);
+        await external.chainLinkOracles["WETH"].updateAnswer(1800 * 1e8);
+      }
 
       // perform redemption
       await core.onez

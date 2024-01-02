@@ -4,14 +4,16 @@ pragma solidity 0.8.19;
 
 import "../interfaces/ILendingPool.sol";
 import "../interfaces/IWrappedLendingCollateral.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 contract WrappedLendingCollateral is
-    ReentrancyGuard,
+    Initializable,
+    ReentrancyGuardUpgradeable,
     IWrappedLendingCollateral,
-    ERC20
+    ERC20Upgradeable
 {
     using SafeERC20 for IERC20;
 
@@ -20,14 +22,18 @@ contract WrappedLendingCollateral is
     IERC20 public aToken;
     IERC20 public underlying;
     ILendingPool public pool;
+    uint256 public scale;
 
-    constructor(
+    function initialize(
         string memory name,
         string memory symbol,
         ILendingPool _pool,
         IERC20 _underlying,
         address _borrowerOperations
-    ) ERC20(name, symbol) {
+    ) external initializer {
+        __ERC20_init(name, symbol);
+        __ReentrancyGuard_init();
+
         pool = _pool;
         underlying = _underlying;
         borrowerOperations = _borrowerOperations;

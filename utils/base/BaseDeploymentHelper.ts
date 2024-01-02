@@ -251,14 +251,16 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
 
     const wCollateral = await this.deployContract<WrappedLendingCollateral>(
       "WrappedLendingCollateral",
-      [
-        token.symbol,
-        token.symbol,
-        external.lendingPool.address,
-        token.address,
-        core.borrowerOperations.address,
-      ],
+      [],
       token.symbol
+    );
+
+    await wCollateral.initialize(
+      token.symbol,
+      token.symbol,
+      external.lendingPool.address,
+      token.address,
+      core.borrowerOperations.address
     );
 
     const deployedTmAddress = await core.factory.collatearlToTM(
@@ -275,18 +277,7 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
         core.priceFeed.setOracle(
           wCollateral.address, // address _token,
           external.chainLinkOracles[token.symbol].address, // address _chainlinkOracle,
-          3600, // uint32 _heartbeat,
-          "0x00000000", // bytes4 sharePriceSignature,
-          0, // uint8 sharePriceDecimals,
-          false // bool _isEthIndexed
-        )
-      );
-
-      await this.waitForTx(
-        core.priceFeed.setOracle(
-          token.address, // address _token,
-          external.chainLinkOracles[token.symbol].address, // address _chainlinkOracle,
-          3600, // uint32 _heartbeat,
+          token.chainlinkOracle ? 3600 : 86400, // uint32 _heartbeat,
           "0x00000000", // bytes4 sharePriceSignature,
           0, // uint8 sharePriceDecimals,
           false // bool _isEthIndexed

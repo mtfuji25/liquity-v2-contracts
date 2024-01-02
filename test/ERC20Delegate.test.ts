@@ -43,8 +43,8 @@ describe("ERC20Delegate", function () {
     );
 
     // give approval and mint 1000 to the ant
-    await erc20.approve(collateral.delegate.address, e6.mul(1000));
-    await erc20["mint(uint256)"](e6.mul(1000));
+    await erc20.connect(ant).approve(collateral.delegate.address, e6.mul(1000));
+    await erc20.connect(ant)["mint(uint256)"](e6.mul(1000));
 
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
