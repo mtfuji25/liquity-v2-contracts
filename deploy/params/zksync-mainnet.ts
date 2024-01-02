@@ -5,8 +5,7 @@ const params: IParams = {
   RPC_URL: "https://mainnet.era.zksync.io",
   COLLATERALS: [
     {
-      pythId:
-        "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+      chainlinkOracle: undefined,
       address: "0x5aea5775959fbc2557cc8789bc1bf90a239d9a91",
       symbol: "WETH",
       decimals: 18,

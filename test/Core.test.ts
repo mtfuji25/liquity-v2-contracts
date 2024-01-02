@@ -21,7 +21,7 @@ import {
 } from "./helpers";
 import { BorrowerOperations, StabilityPool, TroveManager } from "../typechain";
 
-describe("Core", function () {
+describe.only("Core", function () {
   let core: ICoreContracts;
   let external: IExternalContracts;
   let restWallets: SignerWithAddress[];
@@ -55,13 +55,23 @@ describe("Core", function () {
   });
 
   it("Should report price for WETH properly", async function () {
-    const p = core.priceFeedPyth;
-    expect(await p.fetchPrice(collaterals[0].wCollateral.address)).to.equal(
-      "1800000000000000000000"
-    );
-    expect(await p.fetchPrice(collaterals[0].token.address)).to.equal(
-      "1800000000000000000000"
-    );
+    const p = core.priceFeed;
+    expect(
+      await p.callStatic.fetchPrice(collaterals[0].wCollateral.address)
+    ).to.equal("1800000000000000000000");
+    expect(
+      await p.callStatic.fetchPrice(collaterals[0].token.address)
+    ).to.equal("1800000000000000000000");
+  });
+
+  it("Should report price for USDC properly", async function () {
+    const p = core.priceFeed;
+    expect(
+      await p.callStatic.fetchPrice(collaterals[1].wCollateral.address)
+    ).to.equal("1000000000000000000");
+    expect(
+      await p.callStatic.fetchPrice(collaterals[1].token.address)
+    ).to.equal("1000000000000000000");
   });
 
   it("Should deposit/withdraw WETH into the lending pool properly", async function () {
@@ -353,7 +363,9 @@ describe("Core", function () {
 
       // change the price and check the TCR
       expect(await bo.callStatic.getTCR()).eq("3205195349324395097");
-      await external.pyth.setPrice(collaterals[0].token.pythId, 1500 * 1e8, -8);
+      await external.chainLinkOracles[collaterals[0].token.symbol].updateAnswer(
+        1500 * 1e8
+      );
       expect(await bo.callStatic.getTCR()).eq("2670996124436995914");
 
       // and ensure that the defaulter is about to get liquidated; CR: 105%

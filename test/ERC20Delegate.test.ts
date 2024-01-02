@@ -8,7 +8,7 @@ import { ZERO_ADDRESS } from "../utils/base/BaseHelper";
 import { e18, e6 } from "./helpers";
 import { getDelegateHash } from "./hashHelpers";
 
-describe.only("ERC20Delegate", function () {
+describe("ERC20Delegate", function () {
   let core: ICoreContracts;
   let restWallets: SignerWithAddress[];
   let collaterals: ITokenContracts[];
@@ -30,7 +30,7 @@ describe.only("ERC20Delegate", function () {
     collaterals = result.collaterals;
   });
 
-  it.only("Should open a trove with USDC collateral as ERC20", async function () {
+  it("Should open a trove with USDC collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);

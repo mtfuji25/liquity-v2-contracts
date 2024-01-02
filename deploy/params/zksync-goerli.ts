@@ -5,8 +5,7 @@ const params: IParams = {
   RPC_URL: "https://testnet.era.zksync.dev",
   COLLATERALS: [
     {
-      pythId:
-        "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6",
+      chainlinkOracle: undefined,
       address: "0x81d6b98beb0a4288dcfab724fdeae52e5aa2f7b1",
       symbol: "WETH",
       decimals: 18,
@@ -14,8 +13,7 @@ const params: IParams = {
       capacityE18: "10000000000000000000000000", // 100 mil mint
     },
     {
-      pythId:
-        "0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722",
+      chainlinkOracle: undefined,
       address: "0x9223dc9205cf8336ca59ba0bd390647e62d487e5",
       symbol: "USDC",
       decimals: 6,
