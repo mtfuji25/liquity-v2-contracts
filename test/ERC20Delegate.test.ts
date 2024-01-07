@@ -8,7 +8,7 @@ import { ZERO_ADDRESS } from "../utils/base/BaseHelper";
 import { e18, e6 } from "./helpers";
 import { getDelegateHash } from "./hashHelpers";
 
-describe.only("ERC20Delegate", function () {
+describe("ERC20Delegate", function () {
   let core: ICoreContracts;
   let restWallets: SignerWithAddress[];
   let collaterals: ITokenContracts[];
