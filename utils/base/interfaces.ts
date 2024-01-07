@@ -40,6 +40,7 @@ export interface ITokenContracts {
 
 export type ICollateral = {
   chainlinkOracle?: string;
+  chainlinkOracleScale?: number;
   symbol: string;
   decimals: number;
   address: string;

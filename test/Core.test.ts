@@ -65,7 +65,7 @@ describe("Core", function () {
     const p = core.priceFeed;
     expect(
       await p.callStatic.fetchPrice(collaterals[1].wCollateral.address)
-    ).to.equal("1000000000000000000");
+    ).to.equal("1000000000000000000000000000000");
   });
 
   it("Should deposit/withdraw WETH into the lending pool properly", async function () {

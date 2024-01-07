@@ -28,12 +28,12 @@ const params: IParams = {
   LENDING_POOL_ADDRESS: ZERO_ADDRESS,
   ADMIN_ADDRESS: "0xbCAdea1832101cd745d950898C163a5d2D7c597a",
   DEPLOYER_ADDRESS: "0xbCAdea1832101cd745d950898C163a5d2D7c597a",
-  OUTPUT_FILE: "./output/hardhat.json",
+  OUTPUT_FILE: "./output/base-goerli.json",
   GAS_PRICE: 5 * 1000000000, // 5.1 gwei
   TX_CONFIRMATIONS: 0,
   MIN_NET_DEBT: 200,
   GAS_COMPENSATION: 10,
-  ETHERSCAN_BASE_URL: undefined,
+  ETHERSCAN_BASE_URL: "https://goerli.basescan.org",
   NETWORK_NAME: "hardhat-local",
 };
 

@@ -18,14 +18,13 @@ contract PriceFeed is PrismaOwnable {
         IAggregatorV3Interface chainLinkOracle;
         uint8 decimals;
         uint32 heartbeat;
-        bytes4 sharePriceSignature;
-        uint8 sharePriceDecimals;
+        uint8 scaledDecimals;
         bool isFeedWorking;
         bool isEthIndexed;
     }
 
     struct PriceRecord {
-        uint96 scaledPrice;
+        uint256 scaledPrice;
         uint32 timestamp;
         uint32 lastUpdated;
         uint80 roundId;
@@ -75,8 +74,7 @@ contract PriceFeed is PrismaOwnable {
         address token;
         address chainlink;
         uint32 heartbeat;
-        bytes4 sharePriceSignature;
-        uint8 sharePriceDecimals;
+        uint8 scaledDecimals;
         bool isEthIndexed;
     }
 
@@ -85,15 +83,14 @@ contract PriceFeed is PrismaOwnable {
         address ethFeed,
         OracleSetup[] memory oracles
     ) PrismaOwnable(_prismaCore) {
-        _setOracle(address(0), ethFeed, 3600, 0, 0, false);
+        _setOracle(address(0), ethFeed, 3600, 0, false);
         for (uint i = 0; i < oracles.length; i++) {
             OracleSetup memory o = oracles[i];
             _setOracle(
                 o.token,
                 o.chainlink,
                 o.heartbeat,
-                o.sharePriceSignature,
-                o.sharePriceDecimals,
+                o.scaledDecimals,
                 o.isEthIndexed
             );
         }
@@ -106,24 +103,21 @@ contract PriceFeed is PrismaOwnable {
         @param _token Address of the LST to set the oracle for
         @param _chainlinkOracle Address of the chainlink oracle for this LST
         @param _heartbeat Oracle heartbeat, in seconds
-        @param sharePriceSignature Four byte function selector to be used when calling `_collateral`, in order to obtain the share price
-        @param sharePriceDecimals Decimal precision used in the returned share price
+        @param _scaledDecimals Decimal precision used in the returned price
         @param _isEthIndexed True if the base currency is ETH
      */
     function setOracle(
         address _token,
         address _chainlinkOracle,
         uint32 _heartbeat,
-        bytes4 sharePriceSignature,
-        uint8 sharePriceDecimals,
+        uint8 _scaledDecimals,
         bool _isEthIndexed
     ) external onlyOwner {
         _setOracle(
             _token,
             _chainlinkOracle,
             _heartbeat,
-            sharePriceSignature,
-            sharePriceDecimals,
+            _scaledDecimals,
             _isEthIndexed
         );
     }
@@ -132,8 +126,7 @@ contract PriceFeed is PrismaOwnable {
         address _token,
         address _chainlinkOracle,
         uint32 _heartbeat,
-        bytes4 sharePriceSignature,
-        uint8 sharePriceDecimals,
+        uint8 scaledDecimals,
         bool _isEthIndexed
     ) internal {
         if (_heartbeat > 86400) revert PriceFeed__HeartbeatOutOfBoundsError();
@@ -157,8 +150,7 @@ contract PriceFeed is PrismaOwnable {
             chainLinkOracle: newFeed,
             decimals: newFeed.decimals(),
             heartbeat: _heartbeat,
-            sharePriceSignature: sharePriceSignature,
-            sharePriceDecimals: sharePriceDecimals,
+            scaledDecimals: scaledDecimals,
             isFeedWorking: true,
             isEthIndexed: _isEthIndexed
         });
@@ -252,14 +244,8 @@ contract PriceFeed is PrismaOwnable {
                 uint256(_currResponse.answer),
                 decimals
             );
-            if (oracle.sharePriceSignature != 0) {
-                (bool success, bytes memory returnData) = _token.staticcall(
-                    abi.encode(oracle.sharePriceSignature)
-                );
-                require(success, "Share price not available");
-                scaledPrice =
-                    (scaledPrice * abi.decode(returnData, (uint256))) /
-                    (10 ** oracle.sharePriceDecimals);
+            if (oracle.scaledDecimals != 0) {
+                scaledPrice = scaledPrice * (10 ** oracle.scaledDecimals);
             }
             if (!oracle.isFeedWorking) {
                 _updateFeedStatus(_token, oracle, true);
@@ -393,7 +379,7 @@ contract PriceFeed is PrismaOwnable {
         uint80 roundId
     ) internal {
         priceRecords[_token] = PriceRecord({
-            scaledPrice: uint96(_price),
+            scaledPrice: uint256(_price),
             timestamp: uint32(_timestamp),
             lastUpdated: uint32(block.timestamp),
             roundId: roundId

@@ -5,7 +5,7 @@ const params: IParams = {
   RPC_URL: "https://testnet.era.zksync.dev",
   COLLATERALS: [
     {
-      chainlinkOracle: undefined,
+      chainlinkOracle: "0x2bBaff398B72d5B26f4f9B3397cfd9DC578a9f08",
       address: "0x81d6b98beb0a4288dcfab724fdeae52e5aa2f7b1",
       symbol: "WETH",
       decimals: 18,
