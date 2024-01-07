@@ -3,6 +3,9 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@typechain/hardhat";
 import "hardhat-abi-exporter";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -15,6 +18,10 @@ const config: HardhatUserConfig = {
         mnemonic:
           "burger broccoli appear involve admit own next member begin direct flee host seven game hat",
       },
+    },
+    baseGoerli: {
+      url: "https://goerli.base.org",
+      accounts: [process.env.WALLET_PRIVATE_KEY || ""],
     },
   },
   typechain: {

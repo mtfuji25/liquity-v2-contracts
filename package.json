@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "deploy:hardhat": "hardhat --config hardhat.config.ts run scripts/deploy-hardhat-local.ts",
+    "deploy:base:goerli": "hardhat --config hardhat.config.ts run scripts/deploy-hardhat-local.ts --network baseGoerli",
     "deploy:zksync:goerli-fork": "hardhat --config hardhat.config.zksync.ts deploy-zksync --script zksync_goerli_fork.ts",
     "deploy:zksync:goerli": "hardhat --config hardhat.config.zksync.ts deploy-zksync --script zksync_goerli.ts --network zkSyncTestnet",
     "deploy:zksync:mainnet-fork": "hardhat --config hardhat.config.zksync.ts deploy-zksync --script zksync_mainnet_fork.ts",

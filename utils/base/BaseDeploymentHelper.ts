@@ -278,11 +278,12 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
           wCollateral.address, // address _token,
           external.chainLinkOracles[token.symbol].address, // address _chainlinkOracle,
           token.chainlinkOracle ? 3600 : 86400, // uint32 _heartbeat,
-          "0x00000000", // bytes4 sharePriceSignature,
-          0, // uint8 sharePriceDecimals,
+          token.chainlinkOracleScale || 0, // uint8 sharePriceDecimals,
           false // bool _isEthIndexed
         )
       );
+
+      await this.waitForTx(core.priceFeed.fetchPrice(wCollateral.address));
     }
 
     if (deployedTmAddress === ZERO_ADDRESS) {
@@ -448,9 +449,7 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       addreses.push(await this.estimateDeploymentAddress(who, nonce + index));
     }
 
-    this.log("- Done estimating deployment addresses");
-
-    return {
+    const values = {
       DebtTokenOnezProxy: addreses[0],
       PrismaCore: addreses[1],
       PriceFeed: addreses[2],
@@ -468,5 +467,12 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       SortedTroves: addreses[14],
       TroveManager: addreses[15],
     };
+
+    this.log(
+      "- Done estimating deployment addresses",
+      JSON.stringify(values, undefined, 2)
+    );
+
+    return values;
   }
 }
