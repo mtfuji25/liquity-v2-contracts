@@ -61,14 +61,10 @@ export default class EvmDeploymentHelper extends BaseDeploymentHelper {
       gasPrice: this.config.GAS_PRICE,
     })) as T;
 
-    // // wait for the tx
-    // if (this.config.TX_CONFIRMATIONS > 0) {
-    //   const provider = this.g();
-    //   await provider.waitForTransaction(
-    //     contract.deployTransaction.hash,
-    //     this.config.TX_CONFIRMATIONS
-    //   );
-    // }
+    // wait for the tx
+    if (this.config.TX_CONFIRMATIONS > 0) {
+      await contract.deployTransaction.wait(this.config.TX_CONFIRMATIONS);
+    }
 
     this.log(`- Deployed ${name}${suffix} at ${contract.address}`);
     this.state[`${name}${suffix}`] = {

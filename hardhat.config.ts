@@ -23,6 +23,10 @@ const config: HardhatUserConfig = {
       url: "https://goerli.base.org",
       accounts: [process.env.WALLET_PRIVATE_KEY || ""],
     },
+    manta: {
+      url: "https://pacific-rpc.manta.network/http",
+      accounts: [process.env.WALLET_PRIVATE_KEY || ""],
+    },
   },
   typechain: {
     outDir: "typechain",
@@ -44,6 +48,21 @@ const config: HardhatUserConfig = {
         runs: 1000,
       },
     },
+  },
+  etherscan: {
+    apiKey: {
+      manta: process.env.ETHERSCAN_KEY || "",
+    },
+    customChains: [
+      {
+        network: "manta",
+        chainId: 169,
+        urls: {
+          apiURL: "https://pacific-explorer.manta.network/api",
+          browserURL: "https://pacific-explorer.manta.network",
+        },
+      },
+    ],
   },
 };
 

@@ -6,14 +6,14 @@ import {
   FeeReceiver,
   GasPool,
   ILendingPool,
+  IPyth,
   LiquidationManager,
   MintableERC20,
-  MockPyth,
-  MockV3Aggregator,
   MultiCollateralHintHelpers,
   MultiTroveGetter,
   ONEZ,
   PriceFeed,
+  PriceFeedPyth,
   PrismaCore,
   PrismaVault,
   SortedTroves,
@@ -25,9 +25,10 @@ import {
 
 export interface IExternalContracts {
   lendingPool: ILendingPool;
-  chainLinkOracles: {
-    [symbol: string]: MockV3Aggregator;
-  };
+  pyth: IPyth;
+  // chainLinkOracles: {
+  //   [symbol: string]: MockV3Aggregator;
+  // };
 }
 
 export interface ITokenContracts {
@@ -41,6 +42,7 @@ export interface ITokenContracts {
 export type ICollateral = {
   chainlinkOracle?: string;
   chainlinkOracleScale?: number;
+  pythId?: string;
   symbol: string;
   decimals: number;
   address: string;
@@ -89,7 +91,7 @@ export interface ICoreContracts {
   liquidationManager: LiquidationManager;
   sortedTroves: SortedTroves;
   stabilityPool: StabilityPool;
-  priceFeed: PriceFeed;
+  priceFeedPyth: PriceFeedPyth;
   multiCollateralHintHelpers: MultiCollateralHintHelpers;
   multiTroveGetter: MultiTroveGetter;
   troveManagerGetters: TroveManagerGetters;

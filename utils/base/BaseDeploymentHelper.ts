@@ -11,6 +11,7 @@ import {
   MultiCollateralHintHelpers,
   MultiTroveGetter,
   ONEZ,
+  PriceFeedPyth,
   PrismaCore,
   SortedTroves,
   StabilityPool,
@@ -19,15 +20,15 @@ import {
   TroveManagerGetters,
   ILendingPool,
   MockLendingPool,
+  MockPyth,
   MintableERC20,
   WrappedLendingCollateral,
   BaseDelegate,
-  PriceFeed,
-  MockV3Aggregator,
 } from "../../typechain";
 import { ICollateral, ICoreContracts, IExternalContracts } from "./interfaces";
 import Bluebird from "bluebird";
 import { BigNumber } from "ethers";
+import * as ethers from "ethers";
 
 const e18 = BigNumber.from(10).pow(18);
 
@@ -114,16 +115,15 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     const prismaCore = await this.deployContract<PrismaCore>("PrismaCore", [
       owner, // address _owner,
       owner, // address _guardian,
-      estimates.PriceFeed, // address _priceFeed,
+      estimates.PriceFeedPyth, // address _priceFeed,
       estimates.FeeReceiver, // address _feeReceiver
     ]);
 
-    this.log("- Estimating PriceFeed at", estimates.PriceFeed);
-    const priceFeed = await this.deployContract<PriceFeed>("PriceFeed", [
-      estimates.PrismaCore,
-      external.chainLinkOracles["WETH"].address,
-      [],
-    ]);
+    this.log("- Estimating PriceFeedPyth at", estimates.PriceFeedPyth);
+    const priceFeedPyth = await this.deployContract<PriceFeedPyth>(
+      "PriceFeedPyth",
+      [estimates.PrismaCore, external.pyth.address]
+    );
 
     this.log("- Estimating FeeReceiver at", estimates.FeeReceiver);
     const feeReceiver = await this.deployContract<FeeReceiver>("FeeReceiver", [
@@ -235,7 +235,7 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       gasPool,
       liquidationManager,
       stabilityPool,
-      priceFeed,
+      priceFeedPyth,
       multiCollateralHintHelpers,
       multiTroveGetter,
       troveManagerGetters,
@@ -268,22 +268,19 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     );
 
     if (
-      (await core.priceFeed.oracleRecords(wCollateral.address))
-        .chainLinkOracle === ZERO_ADDRESS
+      (await core.priceFeedPyth.priceIds(wCollateral.address)) ===
+        "0x0000000000000000000000000000000000000000000000000000000000000000" &&
+      token.pythId
     ) {
       this.log("- Setting pricefeeds");
 
       await this.waitForTx(
-        core.priceFeed.setOracle(
-          wCollateral.address, // address _token,
-          external.chainLinkOracles[token.symbol].address, // address _chainlinkOracle,
-          token.chainlinkOracle ? 3600 : 86400, // uint32 _heartbeat,
-          token.chainlinkOracleScale || 0, // uint8 sharePriceDecimals,
-          false // bool _isEthIndexed
-        )
+        core.priceFeedPyth.setOracle(wCollateral.address, token.pythId)
       );
 
-      await this.waitForTx(core.priceFeed.fetchPrice(wCollateral.address));
+      await this.waitForTx(
+        core.priceFeedPyth.setOracle(token.address, token.pythId)
+      );
     }
 
     if (deployedTmAddress === ZERO_ADDRESS) {
@@ -291,7 +288,7 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       await this.waitForTx(
         core.factory.deployNewInstance(
           wCollateral.address, // address collateral
-          core.priceFeed.address, // address priceFeed;
+          core.priceFeedPyth.address, // address priceFeed;
           {
             minuteDecayFactor: "999037758833783000", // uint256 minuteDecayFactor; // 999037758833783000  (half life of 12 hours)
             redemptionFeeFloor: "5000000000000000", // uint256 redemptionFeeFloor; // 1e18 / 1000 * 5  (0.5%)
@@ -349,11 +346,11 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
   private async deployOrLoadExternalContracts(): Promise<IExternalContracts> {
     await this.loadMockCollaterals();
 
-    const chainLinkOracles = await this.loadOrDeployMockChainlink();
+    const pyth = await this.loadOrDeployMockPyth();
     const lendingPool = await this.loadOrDeployMockLendingPool();
 
     return {
-      chainLinkOracles,
+      pyth,
       lendingPool,
     };
   }
@@ -408,28 +405,25 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
     return await this.deployContract<ONEZ>(`ONEZ`);
   }
 
-  private async loadOrDeployMockChainlink() {
-    const chainLinkOracles: { [token: string]: MockV3Aggregator } = {};
+  private async loadOrDeployMockPyth() {
+    if (this.config.PYTH_ADDRESS != ZERO_ADDRESS)
+      return await this.getContract<MockPyth>(
+        "MockPyth",
+        this.config.PYTH_ADDRESS
+      );
+
+    const pyth = await this.deployContract<MockPyth>(`MockPyth`);
 
     for (let index = 0; index < this.config.COLLATERALS.length; index++) {
-      const collat = this.config.COLLATERALS[index];
-
-      if (collat.chainlinkOracle) {
-        const mock = await this.getContract<MockV3Aggregator>(
-          `MockV3Aggregator`,
-          collat.chainlinkOracle
-        );
-        chainLinkOracles[collat.symbol] = mock;
-      } else {
-        const mock = await this.deployContract<MockV3Aggregator>(
-          `MockV3Aggregator`,
-          [8, collat.testnetPriceE8 || 0]
-        );
-        chainLinkOracles[collat.symbol] = mock;
-      }
+      await this.waitForTx(
+        pyth.setPrice(
+          this.config.COLLATERALS[index].pythId || "",
+          this.config.COLLATERALS[index].testnetPriceE8 || 0,
+          -8
+        )
+      );
     }
-
-    return chainLinkOracles;
+    return pyth;
   }
 
   abstract estimateDeploymentAddress(
@@ -449,10 +443,12 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       addreses.push(await this.estimateDeploymentAddress(who, nonce + index));
     }
 
-    const values = {
+    this.log("- Done estimating deployment addresses");
+
+    return {
       DebtTokenOnezProxy: addreses[0],
       PrismaCore: addreses[1],
-      PriceFeed: addreses[2],
+      PriceFeedPyth: addreses[2],
       FeeReceiver: addreses[3],
       Factory: addreses[4],
       BorrowerOperations: addreses[5],
@@ -467,12 +463,5 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       SortedTroves: addreses[14],
       TroveManager: addreses[15],
     };
-
-    this.log(
-      "- Done estimating deployment addresses",
-      JSON.stringify(values, undefined, 2)
-    );
-
-    return values;
   }
 }
