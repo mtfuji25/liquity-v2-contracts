@@ -60,7 +60,7 @@ export default async function (hre: HardhatRuntimeEnvironment) {
   // );
   // console.log("approve", approve.hash);
 
-  // console.log("priceFeed", await result.core.priceFeed.fetchPrice());
+  // console.log("priceFeed", await result.core.priceFeedPyth.fetchPrice());
   // console.log("canInitialize", await result.core.troveManager.canInitialize());
 
   // console.log(tx.tx.hash);

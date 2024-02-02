@@ -30,7 +30,9 @@ export default class EvmDeploymentHelper extends BaseDeploymentHelper {
 
   async getContract<T extends Contract>(factoryN: string, address: string) {
     const factory = await this.getFactory(factoryN);
-    return new ethers.Contract(address, factory.interface) as T;
+    const contract = new ethers.Contract(address, factory.interface) as T;
+    const signer = await this.getEthersSigner();
+    return contract.connect(signer) as T;
   }
 
   async deployContract<T extends Contract>(
@@ -48,6 +50,7 @@ export default class EvmDeploymentHelper extends BaseDeploymentHelper {
           this.state[`${name}${suffix}`].address
         }`
       );
+
       return await this.getContract<T>(
         name,
         this.state[`${name}${suffix}`].address

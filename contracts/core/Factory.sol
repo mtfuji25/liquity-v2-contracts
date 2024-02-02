@@ -10,8 +10,6 @@ import "../interfaces/IDebtTokenOnezProxy.sol";
 import "../interfaces/ISortedTroves.sol";
 import "../interfaces/IStabilityPool.sol";
 import "../interfaces/ILiquidationManager.sol";
-
-import "./TroveManager.sol";
 import "./SortedTroves.sol";
 
 /**
@@ -90,17 +88,9 @@ contract Factory is PrismaOwnable {
     function deployNewInstance(
         address collateral,
         address priceFeed,
+        ITroveManager troveManager,
         DeploymentParams memory params
     ) external onlyOwner {
-        TroveManager troveManager = new TroveManager(
-            address(PRISMA_CORE), // address _prismaCore,
-            debtToken.gasPool(), // address _gasPoolAddress,
-            address(debtToken), // address _debtTokenAddress,
-            address(borrowerOperations), // address _borrowerOperationsAddress,
-            stabilityPool.vault(), // address _vault,
-            address(liquidationManager), // address _liquidationManager,
-            borrowerOperations.DEBT_GAS_COMPENSATION() // uint256 _gasCompensation
-        );
         troveManagers.push(address(troveManager));
         collatearlToTM[collateral] = address(troveManager);
 

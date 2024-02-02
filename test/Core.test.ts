@@ -55,14 +55,14 @@ describe("Core", function () {
   });
 
   it("Should report price for WETH properly", async function () {
-    const p = core.priceFeed;
+    const p = core.priceFeedPyth;
     expect(
       await p.callStatic.fetchPrice(collaterals[0].wCollateral.address)
     ).to.equal("1800000000000000000000");
   });
 
   it("Should report price for USDC properly", async function () {
-    const p = core.priceFeed;
+    const p = core.priceFeedPyth;
     expect(
       await p.callStatic.fetchPrice(collaterals[1].wCollateral.address)
     ).to.equal("1000000000000000000000000000000");
@@ -306,9 +306,9 @@ describe("Core", function () {
 
       // go forward 15 days and updte the oracle ones
       for (let index = 0; index < 30; index++) {
-        await external.chainLinkOracles["WETH"].updateAnswer(1800 * 1e8);
+        // await external.chainLinkOracles["WETH"].updateAnswer(1800 * 1e8);
         await time.increase(86400 / 2);
-        await external.chainLinkOracles["WETH"].updateAnswer(1800 * 1e8);
+        // await external.chainLinkOracles["WETH"].updateAnswer(1800 * 1e8);
       }
 
       // perform redemption
@@ -361,8 +361,10 @@ describe("Core", function () {
 
       // change the price and check the TCR
       expect(await bo.callStatic.getTCR()).eq("3205195349324395097");
-      await external.chainLinkOracles[collaterals[0].token.symbol].updateAnswer(
-        1500 * 1e8
+      await external.pyth.setPrice(
+        collaterals[0].token.pythId || "",
+        1500 * 1e8,
+        -8
       );
       expect(await bo.callStatic.getTCR()).eq("2670996124436995914");
 

@@ -5,10 +5,10 @@ import HardhatDeploymentHelper from "../utils/HardhatDeploymentHelper";
 import hre from "hardhat";
 import params from "../deploy/params/hardhat-test";
 import { ZERO_ADDRESS } from "../utils/base/BaseHelper";
-import { e18, e6 } from "./helpers";
+import { e18 } from "./helpers";
 import { getDelegateHash } from "./hashHelpers";
 
-describe("ERC20Delegate", function () {
+describe.only("ERC20Delegate", function () {
   let core: ICoreContracts;
   let restWallets: SignerWithAddress[];
   let collaterals: ITokenContracts[];
@@ -30,7 +30,7 @@ describe("ERC20Delegate", function () {
     collaterals = result.collaterals;
   });
 
-  it("Should open a trove with USDC collateral as ERC20", async function () {
+  it("Should open a trove with DAI collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);
@@ -45,13 +45,15 @@ describe("ERC20Delegate", function () {
     );
 
     // give approval and mint 1000 to the ant
-    await erc20.connect(ant).approve(collateral.delegate.address, e6.mul(1000));
-    await erc20.connect(ant)["mint(uint256)"](e6.mul(1000));
+    await erc20
+      .connect(ant)
+      .approve(collateral.delegate.address, e18.mul(1000));
+    await erc20.connect(ant)["mint(uint256)"](e18.mul(1000));
 
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e6.mul(400), // uint256 _collAmount,
+      e18.mul(400), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
@@ -65,7 +67,7 @@ describe("ERC20Delegate", function () {
     );
   });
 
-  it("Should close a trove with USDC collateral as ERC20", async function () {
+  it("Should close a trove with DAI collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);
@@ -79,13 +81,13 @@ describe("ERC20Delegate", function () {
 
     // give approval and mint 1000 to the ant
     await erc20.approve(collateral.delegate.address, e18.mul(1000));
-    await erc20["mint(uint256)"](e6.mul(1000));
+    await erc20["mint(uint256)"](e18.mul(1000));
 
     // open trove
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e6.mul(1000), // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
@@ -120,7 +122,7 @@ describe("ERC20Delegate", function () {
     );
   });
 
-  it("Should increase collateral a trove with USDC collateral as ERC20", async function () {
+  it("Should increase collateral a trove with DAI collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);
@@ -134,14 +136,14 @@ describe("ERC20Delegate", function () {
       deadline
     );
     // give approval and mint 1000 to the ant
-    await erc20.approve(delegate.address, e6.mul(2000));
-    await erc20["mint(uint256)"](e6.mul(2000));
+    await erc20.approve(delegate.address, e18.mul(2000));
+    await erc20["mint(uint256)"](e18.mul(2000));
 
     // open trove
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e6.mul(1000), // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
@@ -151,7 +153,7 @@ describe("ERC20Delegate", function () {
 
     expect(await core.onez.balanceOf(ant.address)).to.equal(e18.mul(200));
     expect((await tm.getEntireDebtAndColl(ant.address)).coll).to.equal(
-      e6.mul(1000)
+      e18.mul(1000)
     );
 
     const hashClose = await getDelegateHash(
@@ -163,7 +165,7 @@ describe("ERC20Delegate", function () {
 
     await delegate.adjustTrove(
       e18, // uint256 _maxFeePercentage,
-      e6.mul(1000), // uint256 _collDeposit,
+      e18.mul(1000), // uint256 _collDeposit,
       0, // uint256 _collWithdrawal,
       0, // uint256 _debtChange,
       false, // bool _isDebtIncrease,
@@ -175,7 +177,7 @@ describe("ERC20Delegate", function () {
     );
 
     expect((await tm.getEntireDebtAndColl(ant.address)).coll).to.equal(
-      e6.mul(2000)
+      e18.mul(2000)
     );
     // 904% CR
     expect(await tm.getCurrentICR(ant.address, price)).to.equal(
@@ -183,15 +185,15 @@ describe("ERC20Delegate", function () {
     );
   });
 
-  it("Should decrease collateral a trove with USDC collateral as ERC20", async function () {
+  it("Should decrease collateral a trove with DAI collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);
     const tm = collateral.troveManager;
 
     // give approval and mint 1000 to the ant
-    await erc20.approve(delegate.address, e6.mul(1000));
-    await erc20["mint(uint256)"](e6.mul(1000));
+    await erc20.approve(delegate.address, e18.mul(1000));
+    await erc20["mint(uint256)"](e18.mul(1000));
 
     const hashOpen = await getDelegateHash(
       core.borrowerOperations,
@@ -204,7 +206,7 @@ describe("ERC20Delegate", function () {
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e6.mul(1000), // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
@@ -215,7 +217,7 @@ describe("ERC20Delegate", function () {
     expect(await core.onez.balanceOf(ant.address)).to.equal(e18.mul(200));
     expect(
       (await collateral.troveManager.getEntireDebtAndColl(ant.address)).coll
-    ).to.equal(e6.mul(1000));
+    ).to.equal(e18.mul(1000));
 
     const hashClose = await getDelegateHash(
       core.borrowerOperations,
@@ -227,7 +229,7 @@ describe("ERC20Delegate", function () {
     await delegate.adjustTrove(
       e18, // uint256 _maxFeePercentage,
       0, // uint256 _collDeposit,
-      e6.mul(10), // uint256 _collWithdrawal,
+      e18.mul(10), // uint256 _collWithdrawal,
       0, // uint256 _debtChange,
       false, // bool _isDebtIncrease,
       ZERO_ADDRESS, // address _upperHint,
@@ -237,19 +239,19 @@ describe("ERC20Delegate", function () {
     );
 
     expect((await tm.getEntireDebtAndColl(ant.address)).coll).to.equal(
-      e6.mul(990)
+      e18.mul(990)
     );
   });
 
-  it("Should increase debt a trove with USDC collateral as ERC20", async function () {
+  it("Should increase debt a trove with DAI collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);
     const tm = collateral.troveManager;
 
     // give approval and mint 1000 to the ant
-    await erc20.approve(delegate.address, e6.mul(1000));
-    await erc20["mint(uint256)"](e6.mul(1000));
+    await erc20.approve(delegate.address, e18.mul(1000));
+    await erc20["mint(uint256)"](e18.mul(1000));
 
     const hashOpen = await getDelegateHash(
       core.borrowerOperations,
@@ -262,7 +264,7 @@ describe("ERC20Delegate", function () {
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(200), // uint256 _debtAmount,
-      e6.mul(1000), // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,
@@ -299,15 +301,15 @@ describe("ERC20Delegate", function () {
     );
   });
 
-  it("Should decrease debt a trove with USDC collateral as ERC20", async function () {
+  it("Should decrease debt a trove with DAI collateral as ERC20", async function () {
     const collateral = collaterals[1];
     const erc20 = collateral.erc20.connect(ant);
     const delegate = collateral.delegate.connect(ant);
     const tm = collateral.troveManager;
 
     // give approval and mint 1000 to the ant
-    await erc20.approve(delegate.address, e6.mul(1000));
-    await erc20["mint(uint256)"](e6.mul(1000));
+    await erc20.approve(delegate.address, e18.mul(1000));
+    await erc20["mint(uint256)"](e18.mul(1000));
 
     const hashOpen = await getDelegateHash(
       core.borrowerOperations,
@@ -320,7 +322,7 @@ describe("ERC20Delegate", function () {
     await delegate.openTrove(
       e18, // uint256 _maxFeePercentage,
       e18.mul(300), // uint256 _debtAmount,
-      e6.mul(1000), // uint256 _collAmount,
+      e18.mul(1000), // uint256 _collAmount,
       ZERO_ADDRESS, // address _upperHint,
       ZERO_ADDRESS, // address _lowerHint,
       deadline, // uint256 _deadline,

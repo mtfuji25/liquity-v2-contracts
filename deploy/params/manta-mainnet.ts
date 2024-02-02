@@ -22,7 +22,7 @@ const params: IParams = {
   ADMIN_ADDRESS: "0x0F6e98A756A40dD050dC78959f45559F98d3289d",
   DEPLOYER_ADDRESS: "0x0F6e98A756A40dD050dC78959f45559F98d3289d",
   OUTPUT_FILE: "./output/manta-mainnet.json",
-  GAS_PRICE: 0.3 * 1000000000, // 0.3 gwei
+  GAS_PRICE: 0.1 * 1000000000, // 0.3 gwei
   TX_CONFIRMATIONS: 3,
   ETHERSCAN_BASE_URL: "https://pacific-explorer.manta.network",
   NETWORK_NAME: "manta",

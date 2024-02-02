@@ -8,6 +8,8 @@ const params: IParams = {
       address: ZERO_ADDRESS,
       symbol: "WETH",
       decimals: 18,
+      pythId:
+        "0xc3883bcf1101c111e9fcfe2465703c47f2b638e21fef2cce0502e6c8f416e0e2",
       interestRateInBps: "0",
       capacityE18: "10000000000000000000000000", // 100 mil mint
       testnetPriceE8: 1800 * 1e8,
@@ -15,8 +17,10 @@ const params: IParams = {
     {
       address: ZERO_ADDRESS,
       chainlinkOracleScale: 12,
-      symbol: "USDC",
-      decimals: 6,
+      symbol: "DAI",
+      decimals: 18,
+      pythId:
+        "0xc3883bcf1101c111e9fcfe2465703c47f2b638e21fef2cce0502e6c8f416e0e1",
       interestRateInBps: "0",
       capacityE18: "10000000000000000000000000", // 100 mil mint
       testnetPriceE8: 1 * 1e8,

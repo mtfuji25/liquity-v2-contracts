@@ -9,6 +9,7 @@ import {
   IPyth,
   LiquidationManager,
   MintableERC20,
+  MockPyth,
   MultiCollateralHintHelpers,
   MultiTroveGetter,
   ONEZ,
@@ -25,7 +26,7 @@ import {
 
 export interface IExternalContracts {
   lendingPool: ILendingPool;
-  pyth: IPyth;
+  pyth: MockPyth;
   // chainLinkOracles: {
   //   [symbol: string]: MockV3Aggregator;
   // };

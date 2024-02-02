@@ -5,6 +5,7 @@ import EvmDeploymentHelper from "../utils/EvmDeploymentHelper";
 async function main(): Promise<void> {
   const [signer] = await ethers.getSigners();
   const helper = new EvmDeploymentHelper(signer, params, hre);
+  await helper.loadPreviousDeployment();
   await helper.deploy();
 }
 

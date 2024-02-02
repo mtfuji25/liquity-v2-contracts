@@ -255,13 +255,13 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       token.symbol
     );
 
-    await wCollateral.initialize(
-      token.symbol,
-      token.symbol,
-      external.lendingPool.address,
-      token.address,
-      core.borrowerOperations.address
-    );
+    // await wCollateral.initialize(
+    //   token.symbol,
+    //   token.symbol,
+    //   external.lendingPool.address,
+    //   token.address,
+    //   core.borrowerOperations.address
+    // );
 
     const deployedTmAddress = await core.factory.collatearlToTM(
       wCollateral.address
@@ -285,10 +285,28 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
 
     if (deployedTmAddress === ZERO_ADDRESS) {
       this.log("- Deploying collateral");
+
+      this.log("- Deploying collateral tm");
+      const troveManager = await this.deployContract<TroveManager>(
+        "TroveManager",
+        [
+          core.prismaCore.address, // address _prismaCore,
+          core.gasPool.address, // address _gasPoolAddress,
+          core.debtTokenOnezProxy.address, // address _debtTokenAddress,
+          core.borrowerOperations.address, // address _borrowerOperationsAddress,
+          core.prismaVault.address, // address _vault,
+          core.liquidationManager.address, // address _liquidationManager,
+          await core.borrowerOperations.DEBT_GAS_COMPENSATION(), // uint256 _gasCompensation
+        ],
+        token.symbol
+      );
+
+      this.log("- Deploying collateral factory");
       await this.waitForTx(
         core.factory.deployNewInstance(
           wCollateral.address, // address collateral
           core.priceFeedPyth.address, // address priceFeed;
+          troveManager.address,
           {
             minuteDecayFactor: "999037758833783000", // uint256 minuteDecayFactor; // 999037758833783000  (half life of 12 hours)
             redemptionFeeFloor: "5000000000000000", // uint256 redemptionFeeFloor; // 1e18 / 1000 * 5  (0.5%)
