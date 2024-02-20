@@ -255,13 +255,13 @@ export default abstract class BaseDeploymentHelper extends BaseHelper {
       token.symbol
     );
 
-    // await wCollateral.initialize(
-    //   token.symbol,
-    //   token.symbol,
-    //   external.lendingPool.address,
-    //   token.address,
-    //   core.borrowerOperations.address
-    // );
+    await wCollateral.initialize(
+      token.symbol,
+      token.symbol,
+      external.lendingPool.address,
+      token.address,
+      core.borrowerOperations.address
+    );
 
     const deployedTmAddress = await core.factory.collatearlToTM(
       wCollateral.address

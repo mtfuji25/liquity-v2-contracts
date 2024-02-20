@@ -23,6 +23,11 @@ const config: HardhatUserConfig = {
       url: "https://goerli.base.org",
       accounts: [process.env.WALLET_PRIVATE_KEY || ""],
     },
+    "blast-sepolia": {
+      url: "https://sepolia.blast.io",
+      accounts: [process.env.WALLET_PRIVATE_KEY || ""],
+      chainId: 168587773,
+    },
     manta: {
       url: "https://pacific-rpc.manta.network/http",
       accounts: [process.env.WALLET_PRIVATE_KEY || ""],
@@ -51,9 +56,19 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      "blast-sepolia": "test",
       manta: process.env.ETHERSCAN_KEY || "",
     },
     customChains: [
+      {
+        network: "blast-sepolia",
+        chainId: 168587773,
+        urls: {
+          apiURL:
+            "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan",
+          browserURL: "https://testnet.blastscan.io",
+        },
+      },
       {
         network: "manta",
         chainId: 169,
